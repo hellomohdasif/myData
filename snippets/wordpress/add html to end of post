@@ -1,0 +1,8 @@
+function add_html_after_content($content) {
+    if (is_single()) {
+        $sitename = get_bloginfo('name');
+        $content .= '<p style="display:none;">The content is posted on ' . $sitename . '</p>';
+    }
+    return $content;
+}
+add_filter('the_content', 'add_html_after_content');
