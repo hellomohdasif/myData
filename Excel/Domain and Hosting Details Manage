@@ -1,0 +1,106 @@
+Sub CheckAndAddDomains()
+    Dim domainWS As Worksheet
+    Set domainWS = ThisWorkbook.Worksheets("Domains")
+    
+    Dim hostingWS As Worksheet
+    Set hostingWS = ThisWorkbook.Worksheets("Hosting")
+
+    Dim domainCell As Range
+    Dim hostingCell As Range
+    Dim hostingHeader As Range
+    Dim lastRow As Long
+    Dim lastColumn As Long
+    Dim row As Long
+    Dim col As Long
+    Dim columnList As Variant
+    Dim headerColor As Collection
+    Dim headerColors As Variant
+
+    ' Specify the columns to be checked in the Domains sheet.
+    columnList = Array("A", "C", "E")
+
+    ' Initialize the header color collection.
+    Set headerColor = New Collection
+
+    ' Pre-defined color list.
+    headerColors = Array(RGB(128, 0, 0), RGB(0, 128, 0), RGB(0, 0, 128), RGB(128, 128, 0), RGB(128, 0, 128), RGB(0, 128, 128), RGB(64, 64, 64), RGB(128, 64, 64), RGB(64, 128, 64), RGB(64, 64, 128), RGB(128, 128, 64), RGB(128, 64, 128))
+    ' You can add more colors here.
+
+    ' Get the last row in the Domains sheet.
+    lastRow = domainWS.Cells(domainWS.Rows.Count, "A").End(xlUp).Row
+
+    ' Get the last column in the Hosting sheet.
+    lastColumn = hostingWS.Cells(1, hostingWS.Columns.Count).End(xlToLeft).Column
+
+    ' Loop through each specified column in Domains sheet.
+    For Each ColumnName In columnList
+
+        ' Loop through each cell in current column.
+        For Each domainCell In domainWS.Range(ColumnName & "2:" & ColumnName & lastRow)
+
+            ' If the cell is not empty.
+            If domainCell.Value <> "" Then
+
+                ' Initialize domain found flag.
+                Dim domainFound As Boolean
+                domainFound = False
+
+                ' Loop through all cells in Hosting sheet.
+                For row = 1 To lastRow
+                    For col = 1 To lastColumn
+                        If domainCell.Value = hostingWS.Cells(row, col).Value Then
+                            ' Get the header of the column where the domain was found.
+                            Set hostingHeader = hostingWS.Cells(1, col)
+                            
+                            ' Update the corresponding cell in the Domains sheet with the header value.
+                            With domainWS.Cells(domainCell.Row, domainCell.Column + 1)
+                                .Value = hostingHeader.Value
+
+                                ' If the header color hasn't been set yet.
+                                Dim headerIndex As Integer
+                                headerIndex = 0
+                                On Error Resume Next
+                                headerIndex = headerColor.Item(hostingHeader.Value)
+                                On Error GoTo 0
+                                
+                                If headerIndex = 0 Then
+                                    ' Generate a new color for the header.
+                                    headerIndex = headerColor.Count + 1
+                                    headerColor.Add headerIndex, hostingHeader.Value
+                                End If
+
+                                ' Change the cell color to the header's color and the text color to white.
+                                ' Ensure the index is within the headerColors array size.
+                                If headerIndex <= UBound(headerColors) + 1 Then
+                                    .Interior.Color = headerColors(headerIndex - 1)
+                                    .Font.Color = RGB(255, 255, 255)
+                                End If
+                            End With
+                            
+                            ' Set domain found flag to True.
+                            domainFound = True
+                            
+                            ' Exit inner loop.
+                            Exit For
+                        End If
+                    Next col
+                    ' Exit outer loop if domain was found.
+                    If domainFound Then Exit For
+                Next row
+
+                ' Check if domain was not found in the Hosting sheet.
+                If Not domainFound Then
+                    ' Clear the corresponding cell in the Domains sheet.
+                    With domainWS.Cells(domainCell.Row, domainCell.Column + 1)
+                        .ClearContents
+                        .Interior.ColorIndex = xlNone ' Clear cell background color
+                    End With
+                End If
+
+            End If
+
+        Next domainCell
+
+    Next ColumnName
+
+End Sub
