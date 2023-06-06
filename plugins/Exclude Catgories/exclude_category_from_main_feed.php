@@ -79,6 +79,7 @@ function ec_settings() {
 add_action('admin_init', 'ec_settings');
 
 // Categories field markup
+// Categories field markup
 function ec_categories_field_markup() {
     $categories = get_categories(array('hide_empty' => 0, 'orderby' => 'count', 'order' => 'DESC'));
     $selected_categories = get_option('excluded_categories', array());
@@ -89,7 +90,7 @@ function ec_categories_field_markup() {
     </style>';
 
     echo '<table>';
-    echo '<tr><th>Category</th><th>From Everywhere</th><th>From Everywhere But Not on Main Feed</th><th>From Homepage & Main Feed Only</th></tr>';
+    echo '<tr><th>Category</th><th>From Everywhere</th><th>From Everywhere But Not on Main Feed</th><th>From Homepage & Main Feed Only</th><th>Clear Selection</th></tr>';
 
     foreach ($categories as $category) {
         $selected_option = $selected_categories[$category->term_id] ?? '';
@@ -99,8 +100,20 @@ function ec_categories_field_markup() {
         echo '<td><input type="radio" name="excluded_categories[' . $category->term_id . ']" value="everywhere" ' . checked($selected_option, 'everywhere', false) . '></td>';
         echo '<td><input type="radio" name="excluded_categories[' . $category->term_id . ']" value="not_main_feed" ' . checked($selected_option, 'not_main_feed', false) . '></td>';
         echo '<td><input type="radio" name="excluded_categories[' . $category->term_id . ']" value="homepage_and_feed" ' . checked($selected_option, 'homepage_and_feed', false) . '></td>';
+        echo '<td><a href="#" class="clear-selection" data-category-id="' . $category->term_id . '">Clear</a></td>';
         echo '</tr>';
     }
 
     echo '</table>';
+
+    // JavaScript code for clearing the selection
+    echo '<script>
+        jQuery(function($) {
+            $(".clear-selection").click(function(e) {
+                e.preventDefault();
+                var categoryId = $(this).data("category-id");
+                $("input[name=\'excluded_categories[" + categoryId + "]\']").prop("checked", false);
+            });
+        });
+    </script>';
 }
